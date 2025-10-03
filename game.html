@@ -451,16 +451,6 @@
 </div>
 
 <script>
-    // デバッグコード追加: ログ出力用ヘルパー関数
-    function debugLog(source, message = '', data = {}) {
-      console.log(
-        `%c[DEBUG: ${source}]`,
-        'color: #3b82f6; font-weight: bold;',
-        message,
-        data
-      );
-    }
-
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     const CONSTANTS = {
@@ -486,17 +476,14 @@
 
     class Game {
         constructor() {
-            debugLog('GameInit', 'Game class constructor START');
             this.ui = this.getUIReferences();
             this.state = {};
             this.bindEventListeners();
             this.initGame();
-            debugLog('GameInit', 'Game class constructor END');
         }
 
         getUIReferences() {
             return {
-                board: document.querySelector('.game-board'), // デバッグコード追加: ボード要素の参照
                 deckCount: document.getElementById('deck-count'), log: document.getElementById('message-log'),
                 player: { area: document.getElementById('player-area'), hand: document.getElementById('player-hand'), discard: document.getElementById('player-discard'), status: document.getElementById('player-status'), },
                 cpu: { area: document.getElementById('cpu-area'), hand: document.getElementById('cpu-hand'), discard: document.getElementById('cpu-discard'), status: document.getElementById('cpu-status'), },
@@ -513,18 +500,13 @@
         }
         
         bindEventListeners() {
-            this.ui.modals.newGameButton.addEventListener('click', () => {
-                // デバッグコード追加: リスタートボタンクリック時のログ
-                debugLog('GameRestart', 'Button Clicked, starting new game...');
-                this.initGame()
-            });
+            this.ui.modals.newGameButton.addEventListener('click', () => this.initGame());
             this.ui.modals.infoBackButton.addEventListener('click', () => this.handleInfoBackClick());
             this.ui.modals.ruleButton.addEventListener('click', () => this.ui.modals.rule.style.display = 'flex');
             this.ui.modals.ruleCloseButton.addEventListener('click', () => this.ui.modals.rule.style.display = 'none');
         }
 
         initGame() {
-            debugLog('GameInit', 'initGame START');
             this.state = {
                 deck: [],
                 [CONSTANTS.PLAYER_ID]: { id: CONSTANTS.PLAYER_ID, name: 'あなた', hand: [], discard: [], isProtected: false, isOut: false, hasSageEffect: false },
@@ -542,17 +524,16 @@
             this.drawCard(CONSTANTS.CPU_ID);
             this.logMessage('ゲームを開始します。');
             this.ui.modals.gameOver.style.display = 'none';
-            this.updateUI();
+
+            // 修正: requestAnimationFrameで初回描画をラップ
+            requestAnimationFrame(() => {
+                this.updateUI();
+            });
+            
             this.startTurn();
-            debugLog('GameInit', 'initGame END');
         }
 
         updateUI() {
-            // デバッグコード追加: レイアウト計算時のボードサイズをログ出力
-            debugLog('Layout', 'updateUI called', {
-                boardWidth: this.ui.board.offsetWidth,
-                boardHeight: this.ui.board.offsetHeight,
-            });
             const updatePlayerArea = (playerId) => {
                 const playerState = this.state[playerId];
                 const playerUI = this.ui[playerId];
@@ -645,8 +626,6 @@
         }
 
         async playCard(playerId, card, cardIndex) {
-            // デバッグコード追加: カードプレイ時のログ
-            debugLog('FirstPlay', 'Card played, updating layout...', { cardName: card.name });
             if (card.number === CONSTANTS.CARD_NUMBERS.HERO) {
                 this.logMessage('「英雄」は手札からプレイできません。');
                 return;
@@ -1010,13 +989,7 @@
         }
     }
     
-    // デバッグコード追加: ページ読み込みイベントのログ
-    document.addEventListener('DOMContentLoaded', () => {
-        debugLog('PageLoad', 'DOMContentLoaded Event Fired');
-    });
-
     window.addEventListener('load', () => {
-        debugLog('PageLoad', 'window.load Event Fired');
         new Game();
     });
 </script>
