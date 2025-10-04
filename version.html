@@ -6,46 +6,43 @@
     <title>バージョン情報 - XENO</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="container">
-        <h1>バージョン情報</h1>
+<body class="version-page">
+    <div class="page-container">
+        <h1 class="page-container__title">バージョン情報</h1>
 
         <div class="version-info">
-            <h2>バージョン: 1.5.0</h2>
-            <ul>
-                <li>UI/UXの改善を実施：</li>
-                <ul>
-                    <li>ゲーム画面のボタンサイズを最適化し、より洗練されたデザインに変更。</li>
-                    <li>ルール確認モーダルに各カードの詳細な効果説明を追記。</li>
-                    <li>スマートフォンなど、画面幅に応じた文字サイズのレスポンシブ対応を強化。</li>
-                </ul>
+            <h2 class="version-info__title">バージョン: 1.7.1</h2>
+            <ul class="version-info__list">
+                <li class="version-info__item">ホーム画面（index.html）のデザインを全面的に刷新しました。</li>
+                <li class="version-info__item">CSSの設計を見直し、ホームページ専用のスタイルを追加しました。</li>
             </ul>
         </div>
 
         <div class="version-info">
-            <h2>バージョン: 1.4.0</h2>
-            <ul>
-                <li>ホームページ、バージョン情報ページを追加</li>
-                <li>ゲーム画面にルール確認機能、ゲーム終了機能を追加</li>
-                <li>共通のスタイルシートを導入</li>
+            <h2 class="version-info__title">バージョン: 1.7.0</h2>
+            <ul class="version-info__list">
+                <li class="version-info__item"><strong>ロジックの抜本的改修:</strong>
+                    <ul>
+                        <li>デッキのカード構成を正規の18枚に修正しました。</li>
+                        <li>ゲーム開始時に山札から1枚を「転生札」として分離する、正規のセットアップ処理を導入しました。</li>
+                    </ul>
+                </li>
+                <li class="version-info__item"><strong>UIの完全な再設計:</strong>
+                    <ul>
+                        <li>ゲーム画面のHTML構造とCSSをゼロから再設計し、保守性と拡張性を向上させました。</li>
+                    </ul>
+                </li>
             </ul>
         </div>
 
         <div class="version-info">
-            <h2>バージョン: 1.3.0</h2>
-            <ul>
-                <li>コードのリファクタリングを実施し、保守性を向上</li>
-            </ul>
-        </div>
-
-         <div class="version-info">
-            <h2>バージョン: 1.2.0</h2>
-            <ul>
-                <li>革命（少年の2枚目）の効果を、皇帝の「公開処刑」とほぼ同様の動作に修正</li>
+            <h2 class="version-info__title">バージョン: 1.6.1</h2>
+            <ul class="version-info__list">
+                <li class="version-info__item">CSSの内部構造を全面的にリファクタリングし、保守性を向上させました（外観上の変更はありません）。</li>
             </ul>
         </div>
         
-        <div class="menu">
+        <div class="page-container__menu">
              <a href="index.html" class="button">ホームページに戻る</a>
         </div>
     </div>

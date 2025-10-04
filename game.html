@@ -3,443 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>XENO Game</title>
+    <title>XENO Game v1.7.0</title>
+    <!-- Part 1: CSSの分離 -->
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* This file's specific styles */
-        :root {
-            --board-bg: #1a2a1a;
-            --player-area-bg: #2a4a2a;
-            --card-bg: #f0ead6;
-            --card-back-bg: #5a3a2a;
-            --card-border: #333;
-            --text-color: #f0f0f0;
-            --accent-color: #ffc107;
-            --turn-indicator-color: #ffc107;
-            --danger-color: #dc3545;
-            --safe-color: #28a745;
-            --info-color: #0dcaf0;
-        }
-
-        body.game-active {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: var(--board-bg);
-            color: var(--text-color);
-            margin: 0;
-            padding: 10px;
-            overscroll-behavior: none;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-        }
-
-        .game-board {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 20px);
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        .player-area {
-            background-color: var(--player-area-bg);
-            border-radius: 10px;
-            padding: 10px;
-            margin: 5px 0;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            border: 3px solid transparent;
-            transition: border-color 0.3s ease;
-        }
-        
-        .player-area.is-turn {
-            border-color: var(--turn-indicator-color);
-            box-shadow: 0 0 10px var(--turn-indicator-color);
-        }
-        
-        .player-area.is-protected {
-            border-color: var(--safe-color);
-        }
-
-        .player-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .player-name {
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-        
-        .status-icon {
-            font-size: 1.5em;
-            margin-left: 10px;
-        }
-
-        .cards-container {
-            display: flex;
-            gap: 10px;
-            flex: 1;
-            min-height: 130px;
-        }
-
-        .hand-area {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-        }
-
-        .discard-pile {
-            flex-basis: 150px;
-            flex-shrink: 0;
-            background-color: rgba(0,0,0,0.2);
-            border-radius: 5px;
-            padding: 5px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            align-content: flex-start;
-            overflow-y: auto;
-        }
-
-        .card {
-            width: 80px;
-            height: 120px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            color: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px;
-            box-sizing: border-box;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            position: relative;
-            font-size: 0.9em;
-            text-align: center;
-            transition: all 0.2s ease-out;
-        }
-        
-        .discard-pile .card, .info-cards .card {
-            width: 40px;
-            height: 60px;
-            font-size: 0.6em;
-            pointer-events: none;
-        }
-        
-        .discard-pile .card .card-number, .info-cards .card .card-number { font-size: 1.2em; }
-        .discard-pile .card .card-name, .info-cards .card .card-name { font-size: 0.8em; font-weight: normal; }
-        .discard-pile .card .card-number-bottom, .info-cards .card .card-number-bottom { display: none; }
-
-
-        .card.back {
-            background-color: var(--card-back-bg);
-            background-image: repeating-linear-gradient(45deg, #6b4a3a, #6b4a3a 10px, #5a3a2a 10px, #5a3a2a 20px);
-            color: transparent;
-        }
-        
-        .card.playable:hover {
-            transform: translateY(-10px) scale(1.05);
-            cursor: pointer;
-            box-shadow: 0 0 15px var(--accent-color);
-        }
-
-        .card-number {
-            font-size: 1.5em;
-            font-weight: bold;
-            align-self: flex-start;
-        }
-        .card-number-bottom {
-            font-size: 1.5em;
-            font-weight: bold;
-            align-self: flex-end;
-            transform: rotate(180deg);
-        }
-        
-        .card-name {
-            font-size: 1.1em;
-            font-weight: bold;
-        }
-
-        .center-area {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 10px 0;
-            gap: 10px;
-        }
-
-        .deck-pile-container {
-            text-align: center;
-        }
-
-        .message-log {
-            flex-grow: 1;
-            background-color: rgba(0,0,0,0.5);
-            border-radius: 5px;
-            padding: 10px;
-            height: 100px;
-            overflow-y: auto;
-            border: 1px solid var(--card-border);
-            display: flex;
-            flex-direction: column-reverse;
-        }
-        
-        .message-log p {
-            margin: 5px 0 0 0;
-            font-size: 0.9em;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.6);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--player-area-bg);
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            color: var(--text-color);
-        }
-        
-        .modal-content h2 {
-            margin-top: 0;
-            color: var(--accent-color);
-        }
-        
-        .modal-choices {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-        
-        .modal-choices.vertical {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .modal-choices button {
-            background-color: var(--accent-color);
-            color: #000;
-            border: none;
-            padding: 10px 15px;
-            text-align: center;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-
-        .modal-choices button:hover {
-            background-color: #ffda73;
-        }
-        
-        .info-button {
-            background-color: var(--info-color) !important;
-            margin-top: 10px;
-        }
-
-        #new-game-button {
-             background-color: var(--safe-color);
-             color: white;
-             padding: 12px 25px;
-             font-size: 18px;
-             margin-top: 15px;
-        }
-        
-        .info-modal-content, .rule-modal-content {
-            text-align: left;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .info-section, .rule-section {
-            margin-bottom: 15px;
-        }
-        .info-section h3, .rule-section h3 {
-            border-bottom: 1px solid var(--accent-color);
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-        }
-        .info-cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-
-        .game-controls {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            z-index: 500;
-        }
-        .game-controls .button {
-            padding: 6px 10px;
-            font-size: 0.75rem;
-            font-weight: normal;
-            background-color: rgba(0, 0, 0, 0.4);
-            color: #f0f0f0;
-            border: 1px solid rgba(240, 240, 240, 0.5);
-            min-width: auto;
-            text-align: center;
-        }
-        .game-controls .button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: none;
-        }
-        
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 1;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: white;
-        }
-        
-        .rule-list {
-            list-style: none;
-            padding-left: 0;
-            font-size: 0.9em;
-        }
-        .rule-list li {
-            margin-bottom: 12px;
-            padding-left: 1.5em;
-            text-indent: -1.5em;
-            line-height: 1.5;
-        }
-        .rule-list strong {
-            color: var(--accent-color);
-            display: inline-block;
-            width: 70px;
-            font-size: 1.1em;
-        }
-
-    </style>
 </head>
 <body class="game-active">
 
+<!-- Part 2: 新規UIコンポーネント -->
 <div class="game-controls">
-    <button id="rule-button" class="button">ルール</button>
-    <a href="index.html" class="button">終了</a>
+    <button id="rule-button" class="game-controls__button">ルール</button>
+    <a href="index.html" class="game-controls__button game-controls__button--alt">終了</a>
 </div>
 
 <div class="game-board">
+    <!-- Opponent Area -->
     <div id="cpu-area" class="player-area">
-        <div class="player-info">
-            <div>
-                <span id="cpu-name" class="player-name">CPU</span>
-                <span id="cpu-status" class="status-icon"></span>
-            </div>
+        <div class="player-area__info">
+            <span class="player-info__name">CPU</span>
+            <span id="cpu-status" class="player-info__status"></span>
         </div>
-        <div class="cards-container">
-            <div id="cpu-hand" class="hand-area"></div>
+        <div class="player-area__cards">
+            <div id="cpu-hand" class="hand"></div>
             <div id="cpu-discard" class="discard-pile"></div>
         </div>
     </div>
 
-    <div class="center-area">
-        <div class="deck-pile-container">
-            <div id="deck" class="card back"></div>
-            <div>山札: <span id="deck-count">0</span></div>
+    <!-- Shared Area -->
+    <div class="shared-area">
+        <div class="deck">
+            <div id="deck-card" class="card card--is-back"></div>
+            <div id="deck-count" class="deck__count">山札: <span>0</span></div>
         </div>
-        <div class="message-log" id="message-log"></div>
+        <div id="message-log" class="log"></div>
+        <div class="reincarnation-pile">
+             <div id="reincarnation-card" class="card card--is-back"></div>
+             <div class="reincarnation-pile__label">転生札</div>
+        </div>
     </div>
 
+    <!-- Player Area -->
     <div id="player-area" class="player-area">
-        <div class="cards-container">
-            <div id="player-hand" class="hand-area"></div>
+        <div class="player-area__cards">
+            <div id="player-hand" class="hand"></div>
             <div id="player-discard" class="discard-pile"></div>
         </div>
-        <div class="player-info" style="margin-top: 10px;">
-             <div>
-                <span id="player-name" class="player-name">あなた</span>
-                <span id="player-status" class="status-icon"></span>
-            </div>
+        <div class="player-area__info">
+             <span class="player-info__name">あなた</span>
+             <span id="player-status" class="player-info__status"></span>
         </div>
     </div>
 </div>
 
+<!-- Modals -->
 <div id="game-over-modal" class="modal">
-    <div class="modal-content">
-        <h2 id="game-over-message"></h2>
-        <p id="game-over-details"></p>
-        <button id="new-game-button">新しいゲームを始める</button>
+    <div class="modal__content">
+        <h2 id="game-over-title" class="modal__title"></h2>
+        <p id="game-over-desc" class="modal__description"></p>
+        <button id="restart-button" class="modal__button modal__button--restart">新しいゲームを始める</button>
     </div>
 </div>
 
 <div id="action-modal" class="modal">
-    <div class="modal-content">
-        <h2 id="action-modal-title"></h2>
-        <p id="action-modal-description"></p>
-        <div class="modal-choices" id="action-modal-choices"></div>
+    <div class="modal__content">
+        <h2 id="action-title" class="modal__title"></h2>
+        <p id="action-desc" class="modal__description"></p>
+        <div id="action-choices" class="modal__choices"></div>
     </div>
 </div>
 
 <div id="info-modal" class="modal">
-    <div class="modal-content info-modal-content">
-        <h2 id="info-modal-title">盤面情報</h2>
-        <div id="info-modal-body"></div>
-        <div class="modal-choices">
-            <button id="info-modal-back-button">戻る</button>
+    <div class="modal__content modal__content--info">
+        <h2 class="modal__title">盤面情報</h2>
+        <div id="info-body" class="modal__body"></div>
+        <div class="modal__choices">
+            <button id="info-back-button" class="modal__button modal__button--back">戻る</button>
         </div>
     </div>
 </div>
 
 <div id="rule-modal" class="modal">
-    <div class="modal-content rule-modal-content">
-        <span class="close-button" id="rule-modal-close">&times;</span>
-        <h2>ゲームのルール</h2>
+    <div class="modal__content modal__content--rule">
+        <span id="rule-close-button" class="modal__close-button">&times;</span>
+        <h2 class="modal__title">ゲームのルール</h2>
         <div class="rule-section">
-            <h3>目的</h3>
-            <p>相手プレイヤーを脱落させるか、山札がなくなった時点でのカードの数字比べで勝利することを目指します。</p>
-        </div>
-        <div class="rule-section">
-            <h3>ゲームの流れ</h3>
-            <p>1. 各プレイヤーは手札を1枚持ちます。</p>
-            <p>2. 自分のターンになったら、山札からカードを1枚引きます。</p>
-            <p>3. 手札が2枚になったら、どちらか1枚を選んで場に出し、そのカードの効果を発動します。</p>
-            <p>4. これを繰り返し、勝敗が決まるまで続けます。</p>
-        </div>
-         <div class="rule-section">
             <h3>カードの効果</h3>
-            <ul class="rule-list">
-                <li><strong>英雄 (10):</strong> 捨てさせられた時（皇帝を除く）、他の手札を全て捨て山札から1枚引く（転生）。自分ではプレイできない。</li>
-                <li><strong>皇帝 (9):</strong> 相手は山札を1枚引く。その後、相手の2枚の手札を公開させ、あなたが1枚選んで捨てさせる。英雄を捨てさせると転生できない。</li>
+            <ul class="rule-section__list">
+                <li><strong>英雄 (10):</strong> 捨てさせられた時（皇帝を除く）、他の手札を全て捨て転生札を引く。自分ではプレイできない。</li>
+                <li><strong>皇帝 (9):</strong> 相手は山札を1枚引く。相手の2枚の手札を公開させ、1枚選んで捨てさせる。英雄を捨てさせると転生できない。</li>
                 <li><strong>精霊 (8):</strong> 相手と手札を交換する。</li>
                 <li><strong>賢者 (7):</strong> 次の自分のターン、山札から3枚引き1枚を手札に加え、残りを山札に戻す。</li>
-                <li><strong>貴族 (6):</strong> 2枚目に出た時、お互いの手札を比べ、数字が小さい方が脱落する（対決）。</li>
+                <li><strong>貴族 (6):</strong> 2枚目に出た時、お互いの手札を比べ、数字が小さい方が脱落する。</li>
                 <li><strong>死神 (5):</strong> 相手は山札を1枚引く。その後、2枚の手札からランダムで1枚が捨てられる。</li>
                 <li><strong>乙女 (4):</strong> 次の自分のターンまで、相手のカード効果を受けない。</li>
                 <li><strong>占師 (3):</strong> 相手の手札を見る。</li>
@@ -450,550 +103,8 @@
     </div>
 </div>
 
-<script>
-    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-    const CONSTANTS = {
-        PLAYER_ID: 'player', CPU_ID: 'cpu', REVEAL_DURATION: 5000, TURN_DELAY: 1000,
-        CPU_THINK_TIME: 1500,
-        EFFECT_SOURCE: { EMPEROR: 'emperor', REVOLUTION: 'revolution', EFFECT: 'effect' },
-        CARD_NUMBERS: { BOY: 1, SOLDIER: 2, FORTUNE_TELLER: 3, MAIDEN: 4, REAPER: 5,
-            NOBLE: 6, SAGE: 7, SPIRIT: 8, EMPEROR: 9, HERO: 10 },
-    };
-
-    const CARD_DATA = {
-        [CONSTANTS.CARD_NUMBERS.BOY]: { name: '少年', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.SOLDIER]: { name: '兵士', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.FORTUNE_TELLER]: { name: '占師', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.MAIDEN]: { name: '乙女', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.REAPER]: { name: '死神', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.NOBLE]: { name: '貴族', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.SAGE]: { name: '賢者', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.SPIRIT]: { name: '精霊', count: 2 },
-        [CONSTANTS.CARD_NUMBERS.EMPEROR]: { name: '皇帝', count: 1 },
-        [CONSTANTS.CARD_NUMBERS.HERO]: { name: '英雄', count: 1 },
-    };
-
-    class Game {
-        constructor() {
-            this.ui = this.getUIReferences();
-            this.state = {};
-            this.bindEventListeners();
-            this.initGame();
-        }
-
-        getUIReferences() {
-            return {
-                deckCount: document.getElementById('deck-count'), log: document.getElementById('message-log'),
-                player: { area: document.getElementById('player-area'), hand: document.getElementById('player-hand'), discard: document.getElementById('player-discard'), status: document.getElementById('player-status'), },
-                cpu: { area: document.getElementById('cpu-area'), hand: document.getElementById('cpu-hand'), discard: document.getElementById('cpu-discard'), status: document.getElementById('cpu-status'), },
-                modals: {
-                    gameOver: document.getElementById('game-over-modal'), gameOverMessage: document.getElementById('game-over-message'),
-                    gameOverDetails: document.getElementById('game-over-details'), newGameButton: document.getElementById('new-game-button'),
-                    action: document.getElementById('action-modal'), actionTitle: document.getElementById('action-modal-title'),
-                    actionDescription: document.getElementById('action-modal-description'), actionChoices: document.getElementById('action-modal-choices'),
-                    info: document.getElementById('info-modal'), infoBody: document.getElementById('info-modal-body'),
-                    infoBackButton: document.getElementById('info-modal-back-button'), rule: document.getElementById('rule-modal'),
-                    ruleButton: document.getElementById('rule-button'), ruleCloseButton: document.getElementById('rule-modal-close'),
-                }
-            };
-        }
-        
-        bindEventListeners() {
-            this.ui.modals.newGameButton.addEventListener('click', () => this.initGame());
-            this.ui.modals.infoBackButton.addEventListener('click', () => this.handleInfoBackClick());
-            this.ui.modals.ruleButton.addEventListener('click', () => this.ui.modals.rule.style.display = 'flex');
-            this.ui.modals.ruleCloseButton.addEventListener('click', () => this.ui.modals.rule.style.display = 'none');
-        }
-
-        initGame() {
-            this.state = {
-                deck: [],
-                [CONSTANTS.PLAYER_ID]: { id: CONSTANTS.PLAYER_ID, name: 'あなた', hand: [], discard: [], isProtected: false, isOut: false, hasSageEffect: false },
-                [CONSTANTS.CPU_ID]: { id: CONSTANTS.CPU_ID, name: 'CPU', hand: [], discard: [], isProtected: false, isOut: false, hasSageEffect: false },
-                turn: CONSTANTS.PLAYER_ID, gameOver: false, isEffectActive: false,
-            };
-            
-            for (const number in CARD_DATA) {
-                for (let i = 0; i < CARD_DATA[number].count; i++) {
-                    this.state.deck.push({ number: parseInt(number), name: CARD_DATA[number].name });
-                }
-            }
-            this.shuffleDeck();
-            this.drawCard(CONSTANTS.PLAYER_ID);
-            this.drawCard(CONSTANTS.CPU_ID);
-            this.logMessage('ゲームを開始します。');
-            this.ui.modals.gameOver.style.display = 'none';
-
-            // 修正: requestAnimationFrameで初回描画をラップ
-            requestAnimationFrame(() => {
-                this.updateUI();
-            });
-            
-            this.startTurn();
-        }
-
-        updateUI() {
-            const updatePlayerArea = (playerId) => {
-                const playerState = this.state[playerId];
-                const playerUI = this.ui[playerId];
-                playerUI.hand.innerHTML = '';
-                playerState.hand.forEach((card, index) => playerUI.hand.appendChild(this.createCardElement(card, playerId, index)));
-                playerUI.discard.innerHTML = '';
-                playerState.discard.forEach(card => playerUI.discard.appendChild(this.createCardElement(card, 'discard')));
-                playerUI.area.classList.toggle('is-turn', this.state.turn === playerId && !this.state.gameOver);
-                playerUI.status.textContent = playerState.isProtected ? '🛡️' : '';
-            };
-            updatePlayerArea(CONSTANTS.PLAYER_ID);
-            updatePlayerArea(CONSTANTS.CPU_ID);
-            this.ui.deckCount.textContent = this.state.deck.length;
-        }
-        
-        createCardElement(card, owner, cardIndex = -1) {
-            const el = document.createElement('div');
-            el.classList.add('card');
-            const isCpuCard = owner === CONSTANTS.CPU_ID;
-            const isRevealed = card.isRevealed || (owner === CONSTANTS.PLAYER_ID) || this.state.gameOver;
-            if (isCpuCard && !isRevealed) {
-                el.classList.add('back');
-            } else {
-                el.innerHTML = `
-                    <div class="card-number">${card.number}</div>
-                    <div class="card-name">${card.name}</div>
-                    <div class="card-number-bottom">${card.number}</div>`;
-            }
-            const isPlayable = owner === CONSTANTS.PLAYER_ID && this.state.turn === CONSTANTS.PLAYER_ID && this.state.player.hand.length === 2 && !this.state.isEffectActive;
-            if (isPlayable) {
-                el.classList.add('playable');
-                el.addEventListener('click', () => this.playCard(CONSTANTS.PLAYER_ID, card, cardIndex));
-            }
-            return el;
-        }
-
-        logMessage(msg) {
-            const p = document.createElement('p');
-            p.textContent = msg;
-            this.ui.log.prepend(p);
-        }
-
-        async startTurn() {
-            if (this.state.gameOver) return;
-            const currentPlayerId = this.state.turn;
-            const currentPlayer = this.state[currentPlayerId];
-            this.logMessage(`--- ${currentPlayer.name}のターン ---`);
-            currentPlayer.isProtected = false;
-            if (currentPlayer.hasSageEffect) {
-                currentPlayer.hasSageEffect = false;
-                this.logMessage(`${currentPlayer.name}は「賢者」の効果を発動！`);
-                const drawnCards = [];
-                const drawCount = Math.min(3, this.state.deck.length);
-                if (drawCount > 0) {
-                    for (let i = 0; i < drawCount; i++) drawnCards.push(this.state.deck.pop());
-                    const chosenCard = await this.promptForChoice({
-                        playerId: currentPlayerId, type: 'card', title: '賢者の効果',
-                        description: '手札に加えるカードを1枚選んでください。', options: drawnCards
-                    });
-                    currentPlayer.hand.push(chosenCard);
-                    const returnedCards = drawnCards.filter(c => c !== chosenCard);
-                    if (returnedCards.length > 0) {
-                        this.state.deck.push(...returnedCards);
-                        this.shuffleDeck();
-                    }
-                    this.logMessage(`${currentPlayer.name}はカードを1枚選び、残りを山札に戻した。`);
-                } else {
-                    this.logMessage('しかし山札にカードがなかった。');
-                }
-            } else {
-                if (!this.drawCard(currentPlayerId)) {
-                    this.endGame(this.checkWinCondition());
-                    return;
-                }
-            }
-            this.updateUI();
-            if (currentPlayerId === CONSTANTS.CPU_ID) {
-                await sleep(CONSTANTS.CPU_THINK_TIME);
-                this.cpuTurn();
-            }
-        }
-        
-        async endTurn() {
-            if (this.state.gameOver) return;
-            const winner = this.checkWinCondition();
-            if (winner) { this.endGame(winner); return; }
-            this.state.turn = (this.state.turn === CONSTANTS.PLAYER_ID) ? CONSTANTS.CPU_ID : CONSTANTS.PLAYER_ID;
-            await sleep(CONSTANTS.TURN_DELAY);
-            this.startTurn();
-        }
-
-        async playCard(playerId, card, cardIndex) {
-            if (card.number === CONSTANTS.CARD_NUMBERS.HERO) {
-                this.logMessage('「英雄」は手札からプレイできません。');
-                return;
-            }
-            const player = this.state[playerId];
-            if (this.state.turn !== playerId || player.hand.length < 2 || this.state.isEffectActive) return;
-            this.state.isEffectActive = true;
-            player.hand.splice(cardIndex, 1);
-            player.discard.push(card);
-            this.logMessage(`${player.name}は「${card.name}」をプレイ。`);
-            this.updateUI();
-            const effectHandler = this.CARD_EFFECTS[card.number];
-            if (effectHandler) await effectHandler.call(this, playerId);
-            this.state.isEffectActive = false;
-            this.endTurn();
-        }
-
-        CARD_EFFECTS = {
-            async [CONSTANTS.CARD_NUMBERS.BOY](playerId) {
-                const allDiscards = [...this.state.player.discard, ...this.state.cpu.discard];
-                const boyCount = allDiscards.filter(c => c.number === CONSTANTS.CARD_NUMBERS.BOY).length;
-                if (boyCount === 2) {
-                    await this.executeRevolution(playerId);
-                } else {
-                    this.logMessage('「少年」の効果。何も起こらない。');
-                    await sleep(CONSTANTS.TURN_DELAY);
-                }
-            },
-            async [CONSTANTS.CARD_NUMBERS.SOLDIER](playerId) {
-                const guess = await this.promptForChoice({
-                    playerId, type: 'button', title: '推測',
-                    description: '相手の手札の役職を推測してください。', options: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                    showInfoButton: true,
-                });
-                if (guess === null) return;
-                const opponent = this.state[this.getOpponentId(playerId)];
-                this.logMessage(`${this.state[playerId].name}は「${CARD_DATA[guess].name}」と推測。`);
-                if (opponent.hand[0]?.number === guess) {
-                    this.logMessage(`的中！ ${opponent.name}は脱落。`);
-                    opponent.isOut = true;
-                } else {
-                    this.logMessage('しかし、推測は外れた。');
-                }
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.FORTUNE_TELLER](playerId) {
-                 const opponentId = this.getOpponentId(playerId);
-                 if (this.state[opponentId].hand.length === 0) {
-                    this.logMessage('相手の手札がありません。');
-                 } else {
-                    this.logMessage(`${this.state[playerId].name}は${opponentId === CONSTANTS.PLAYER_ID ? '自分' : '相手'}の手札を見た。`);
-                    if (playerId === CONSTANTS.PLAYER_ID) {
-                        await this.revealCard(opponentId, 0, CONSTANTS.REVEAL_DURATION);
-                    }
-                 }
-                 await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.MAIDEN](playerId) {
-                this.logMessage(`${this.state[playerId].name}は次のターンまで守護状態に。`);
-                this.state[playerId].isProtected = true;
-                this.updateUI();
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.REAPER](playerId) {
-                const opponentId = this.getOpponentId(playerId);
-                const opponent = this.state[opponentId];
-                this.logMessage(`${opponent.name}は山札から1枚引く。`);
-                this.drawCard(opponentId);
-                this.updateUI();
-                await sleep(CONSTANTS.TURN_DELAY);
-                if (opponent.hand.length > 0) {
-                    const discardIndex = Math.floor(Math.random() * opponent.hand.length);
-                    this.logMessage(`2枚の手札からランダムに1枚が捨てられる...`);
-                    await sleep(CONSTANTS.TURN_DELAY);
-                    this.discardCard(opponentId, discardIndex);
-                } else {
-                    this.logMessage(`しかし相手の手札がなかった。`);
-                }
-                if (this.state.gameOver) this.endGame(this.checkWinCondition());
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.NOBLE](playerId) {
-                const opponentId = this.getOpponentId(playerId);
-                const allDiscards = [...this.state.player.discard, ...this.state.cpu.discard];
-                const nobleCount = allDiscards.filter(c => c.number === CONSTANTS.CARD_NUMBERS.NOBLE).length;
-                if (nobleCount === 1) {
-                     this.logMessage('1枚目の「貴族」。お互いの手札を見せ合う。');
-                     await Promise.all([
-                        this.revealCard(playerId, 0, CONSTANTS.REVEAL_DURATION),
-                        this.revealCard(opponentId, 0, CONSTANTS.REVEAL_DURATION)
-                     ]);
-                } else {
-                    this.logMessage('2枚目の「貴族」！対決だ！');
-                    const player = this.state[playerId];
-                    const opponent = this.state[opponentId];
-                    if(player.hand.length === 0 || opponent.hand.length === 0) {
-                        this.logMessage('しかし、どちらかの手札がなかった。');
-                        return;
-                    }
-                    await Promise.all([
-                        this.revealCard(playerId, 0, CONSTANTS.REVEAL_DURATION),
-                        this.revealCard(opponentId, 0, CONSTANTS.REVEAL_DURATION)
-                    ]);
-                    const pCard = player.hand[0].number;
-                    const oCard = opponent.hand[0].number;
-                    if (pCard > oCard) {
-                        this.logMessage(`${player.name}の勝利！ ${opponent.name}は脱落。`);
-                        opponent.isOut = true;
-                    } else if (oCard > pCard) {
-                        this.logMessage(`${opponent.name}の勝利！ ${player.name}は脱落。`);
-                        player.isOut = true;
-                    } else {
-                        this.logMessage('引き分けだ。');
-                    }
-                }
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.SAGE](playerId) {
-                this.logMessage('「賢者」の効果。次のターン、山札から3枚引く。');
-                this.state[playerId].hasSageEffect = true;
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.SPIRIT](playerId) {
-                const opponentId = this.getOpponentId(playerId);
-                const player = this.state[playerId];
-                const opponent = this.state[opponentId];
-                if(player.hand.length === 0 || opponent.hand.length === 0) {
-                    this.logMessage('どちらかの手札がありません。');
-                    return;
-                }
-                this.logMessage(`${player.name}は${opponent.name}と手札を交換！`);
-                [player.hand[0], opponent.hand[0]] = [opponent.hand[0], player.hand[0]];
-                this.updateUI();
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-            async [CONSTANTS.CARD_NUMBERS.EMPEROR](playerId) {
-                const opponentId = this.getOpponentId(playerId);
-                const opponent = this.state[opponentId];
-                this.logMessage(`${opponent.name}は山札から1枚引く。`);
-                this.drawCard(opponentId);
-                this.updateUI();
-                await sleep(CONSTANTS.TURN_DELAY);
-                if(opponent.hand.length === 0) { 
-                    this.logMessage('しかし相手の手札がなかった。');
-                    return; 
-                }
-                this.logMessage(`${this.state[playerId].name}は${opponent.name}の手札を公開させ、1枚選んで捨てさせる！`);
-                await Promise.all(opponent.hand.map((_, index) => this.revealCard(opponentId, index, CONSTANTS.REVEAL_DURATION)));
-                const cardToDiscard = await this.promptForChoice({
-                    playerId, type: 'card', title: '皇帝の効果',
-                    description: '捨てさせるカードを1枚選んでください。', options: opponent.hand
-                });
-                const cardIndexToDiscard = opponent.hand.findIndex(c => c === cardToDiscard);
-                this.discardCard(opponentId, cardIndexToDiscard, CONSTANTS.EFFECT_SOURCE.EMPEROR);
-                if(this.state.gameOver) this.endGame(this.checkWinCondition());
-                await sleep(CONSTANTS.TURN_DELAY);
-            },
-        };
-
-        async executeRevolution(playerId) {
-            const opponentId = this.getOpponentId(playerId);
-            const opponent = this.state[opponentId];
-            if (opponent.isProtected) {
-                this.logMessage(`しかし、${opponent.name}は「乙女」の効果で守られている！`);
-                await sleep(CONSTANTS.TURN_DELAY);
-                return;
-            }
-            this.logMessage(`${opponent.name}は山札から1枚引く。`);
-            this.drawCard(opponentId);
-            this.updateUI();
-            await sleep(CONSTANTS.TURN_DELAY);
-            if (opponent.hand.length === 0) {
-                this.logMessage('しかし相手の手札がなかった。');
-                await sleep(CONSTANTS.TURN_DELAY);
-                return;
-            }
-            this.logMessage(`${this.state[playerId].name}は${opponent.name}の手札を公開させ、1枚選んで捨てさせる！`);
-            await Promise.all(opponent.hand.map((_, index) => this.revealCard(opponentId, index, CONSTANTS.REVEAL_DURATION)));
-            const cardToDiscard = await this.promptForChoice({
-                playerId, type: 'card', title: '革命の効果',
-                description: '捨てさせるカードを1枚選んでください。', options: opponent.hand
-            });
-            const cardIndexToDiscard = opponent.hand.findIndex(c => c === cardToDiscard);
-            this.discardCard(opponentId, cardIndexToDiscard, CONSTANTS.EFFECT_SOURCE.REVOLUTION);
-            if (this.state.gameOver) this.endGame(this.checkWinCondition());
-            await sleep(CONSTANTS.TURN_DELAY);
-        }
-
-        cpuTurn() {
-            const hand = this.state.cpu.hand;
-            if (hand.length < 2) { this.endTurn(); return; }
-            const playableHand = hand.map((card, index) => ({ card, index })).filter(item => item.card.number !== CONSTANTS.CARD_NUMBERS.HERO);
-            if (playableHand.length === 0) { this.endTurn(); return; }
-            const sageInHand = playableHand.find(item => item.card.number === CONSTANTS.CARD_NUMBERS.SAGE);
-            const choice = sageInHand || playableHand.sort((a,b) => a.card.number - b.card.number)[0];
-            this.playCard(CONSTANTS.CPU_ID, choice.card, choice.index);
-        }
-
-        getOpponentId(playerId) {
-            return playerId === CONSTANTS.PLAYER_ID ? CONSTANTS.CPU_ID : CONSTANTS.PLAYER_ID;
-        }
-
-        async promptForChoice({ playerId, type, title, description, options, showInfoButton = false }) {
-            if (playerId === CONSTANTS.CPU_ID) return this.getCpuChoice(type, options);
-            return new Promise(resolve => {
-                this.ui.modals.actionTitle.textContent = title;
-                this.ui.modals.actionDescription.textContent = description;
-                const choicesContainer = this.ui.modals.actionChoices;
-                choicesContainer.innerHTML = '';
-                choicesContainer.className = 'modal-choices';
-                const itemContainer = document.createElement('div');
-                itemContainer.className = 'modal-choices';
-                choicesContainer.appendChild(itemContainer);
-                options.forEach(option => {
-                    const el = type === 'card' ? this.createCardElement(option, CONSTANTS.PLAYER_ID) : document.createElement('button');
-                    if (type === 'button') el.textContent = CARD_DATA[option].name;
-                    el.style.cursor = 'pointer';
-                    el.onclick = () => { this.ui.modals.action.style.display = 'none'; resolve(option); };
-                    itemContainer.appendChild(el);
-                });
-                if (showInfoButton) {
-                    const infoButton = document.createElement('button');
-                    infoButton.textContent = '盤面の情報を確認する'; infoButton.className = 'info-button';
-                    infoButton.style.marginTop = '15px';
-                    infoButton.onclick = () => { this.ui.modals.action.style.display = 'none'; this.showInfoModal(); };
-                    choicesContainer.appendChild(infoButton);
-                }
-                this.ui.modals.action.style.display = 'flex';
-            });
-        }
-        
-        getCpuChoice(type, options) {
-            if (type === 'card') {
-                const hero = options.find(c => c.number === CONSTANTS.CARD_NUMBERS.HERO);
-                const nonHero = options.find(c => c.number !== CONSTANTS.CARD_NUMBERS.HERO);
-                if (hero && nonHero) return nonHero;
-                return options.sort((a,b) => a.number - b.number)[0];
-            }
-            if (type === 'button') {
-                const allDiscards = [...this.state.player.discard, ...this.state.cpu.discard];
-                const discardCounts = allDiscards.reduce((acc, card) => { acc[card.number] = (acc[card.number] || 0) + 1; return acc; }, {});
-                const validGuesses = options.filter(guess => (discardCounts[guess] || 0) < CARD_DATA[guess].count);
-                const guessPool = validGuesses.length > 0 ? validGuesses : options;
-                return guessPool[Math.floor(Math.random() * guessPool.length)];
-            }
-            return options[0];
-        }
-
-        showInfoModal() {
-            let html = '';
-            const createSection = (title, cards, owner) => {
-                let sectionHtml = `<div class="info-section"><h3>${title}</h3><div class="info-cards">`;
-                cards.forEach(card => { sectionHtml += this.createCardElement(card, owner).outerHTML; });
-                return sectionHtml + '</div></div>';
-            };
-            html += createSection('あなたの手札', this.state.player.hand, CONSTANTS.PLAYER_ID);
-            html += createSection('あなたの捨て札', this.state.player.discard, 'discard');
-            html += createSection('CPUの捨て札', this.state.cpu.discard, 'discard');
-            this.ui.modals.infoBody.innerHTML = html;
-            this.ui.modals.info.style.display = 'flex';
-        }
-
-        handleInfoBackClick() {
-            this.ui.modals.info.style.display = 'none';
-            this.ui.modals.action.style.display = 'flex';
-        }
-
-        shuffleDeck() {
-            for (let i = this.state.deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [this.state.deck[i], this.state.deck[j]] = [this.state.deck[j], this.state.deck[i]];
-            }
-        }
-
-        drawCard(playerId) {
-            if (this.state.deck.length === 0) {
-                this.logMessage('山札がなくなりました！');
-                return false;
-            }
-            const card = this.state.deck.pop();
-            this.state[playerId].hand.push(card);
-            return true;
-        }
-
-        discardCard(playerId, handIndex, source = CONSTANTS.EFFECT_SOURCE.EFFECT) {
-            const player = this.state[playerId];
-            if (player.hand.length <= handIndex) return;
-            const card = player.hand.splice(handIndex, 1)[0];
-            player.discard.push(card);
-            this.logMessage(`${player.name}は「${card.name}」を捨てさせられた。`);
-            if (card.number === CONSTANTS.CARD_NUMBERS.HERO) {
-                if (source === CONSTANTS.EFFECT_SOURCE.EMPEROR) {
-                    this.logMessage('「英雄」は「皇帝」によって処刑され、転生できない！');
-                    player.isOut = true;
-                } else {
-                    this.reincarnate(playerId);
-                }
-            }
-            this.updateUI();
-        }
-
-        reincarnate(playerId) {
-            const player = this.state[playerId];
-            this.logMessage(`「英雄」が捨てられた！ ${player.name}は転生し、山札から1枚引く。`);
-            while (player.hand.length > 0) {
-                const cardInHand = player.hand.pop();
-                player.discard.push(cardInHand);
-                this.logMessage(`${player.name}は手札の「${cardInHand.name}」を捨てた。`);
-            }
-            this.drawCard(playerId);
-        }
-        
-        async revealCard(playerId, handIndex, duration) {
-            const card = this.state[playerId].hand[handIndex];
-            if (!card) return;
-            card.isRevealed = true;
-            this.updateUI();
-            if (duration > 0) {
-                await sleep(duration);
-                const cardStillInHand = this.state[playerId].hand.includes(card);
-                if (cardStillInHand && card.isRevealed) {
-                    card.isRevealed = false;
-                    this.updateUI();
-                }
-            }
-        }
-        
-        checkWinCondition() {
-            const player = this.state.player;
-            const cpu = this.state.cpu;
-            if (player.isOut) return cpu;
-            if (cpu.isOut) return player;
-            if (this.state.deck.length === 0 && player.hand.length < 2 && cpu.hand.length < 2) {
-                this.logMessage('最終決戦！');
-                const pCardNum = player.hand[0]?.number || 0;
-                const cCardNum = cpu.hand[0]?.number || 0;
-                if (pCardNum > cCardNum) return player;
-                if (cCardNum > pCardNum) return cpu;
-                return 'draw';
-            }
-            return null;
-        }
-
-        endGame(winner) {
-            if (this.state.gameOver) return;
-            this.state.gameOver = true;
-            let message = '';
-            const pCard = this.state.player.hand[0] || { name: 'なし', number: 0 };
-            const cCard = this.state.cpu.hand[0] || { name: 'なし', number: 0 };
-            const details = `最終手札: あなた[${pCard.name}] vs CPU[${cCard.name}]`;
-            message = (winner === 'draw') ? '引き分けです！' : `${winner.name}の勝利です！`;
-            this.logMessage(message);
-            this.updateUI();
-            this.showEndGameModal(message, details);
-        }
-
-        showEndGameModal(message, details) {
-            this.ui.modals.gameOverMessage.textContent = message;
-            this.ui.modals.gameOverDetails.textContent = details;
-            this.ui.modals.gameOver.style.display = 'flex';
-        }
-    }
-    
-    window.addEventListener('load', () => {
-        new Game();
-    });
-</script>
-
+<!-- Part 1: JavaScriptの分離 -->
+<script src="game.js" defer></script>
 </body>
 </html>
 
